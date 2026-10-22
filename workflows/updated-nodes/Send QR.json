@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"image\",\n      \"payload\": {\n        \"url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774088373/QR_new_qotdmx.jpg\",\n        \"is_reusable\": true\n      }\n    }\n  }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    80,
+    352
+  ],
+  "id": "8c110363-4e6a-4d63-a96b-4dda0139791f",
+  "name": "Send QR"
+}

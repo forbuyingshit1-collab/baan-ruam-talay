@@ -1,0 +1,1666 @@
+{
+  "name": "Bot v44",
+  "nodes": [
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "n8n-webhook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1328,
+        256
+      ],
+      "id": "3228bb28-657d-4220-a147-7515104860ef",
+      "name": "Webhook",
+      "webhookId": "2cd175a5-ffcb-44bd-acb4-b9916f4529f0"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// Router: QR or Product Image\n// ==========================================\n\nconst output = $input.first().json.output || '';\nconst trimmed = output.trim();\n\n// 1. ตรวจสอบว่าเป็น QR Code\nif (trimmed === 'QR') {\n  return [\n    {\n      json: {\n        type: 'qr',\n        senderId: $('Extract Event2').first().json.senderId,\n        pageId: $('Extract Event2').first().json.pageId\n      }\n    }\n  ];\n}\n\n// 2. ตรวจสอบว่าเป็นรูปสินค้า (เช็คว่าขึ้นต้นด้วย IMAGE|)\n// โครงสร้าง input ต้องเป็น: IMAGE|URL|ข้อความ\nif (trimmed.startsWith('IMAGE|')) {\n  \n  // สั่งผ่าข้อความด้วยตัว |\n  const parts = trimmed.split('|'); \n  \n  // parts[0] = \"IMAGE\"\n  // parts[1] = URL\n  // parts[2] = ข้อความ (Caption)\n  const imageUrl = parts[1] ? parts[1].trim() : '';\n  const captionText = parts[2] ? parts[2].trim() : '';\n\n  // เช็คว่ามี URL และเป็น https ไหม\n  if (imageUrl && imageUrl.startsWith('https')) {\n    return [\n      {\n        json: {\n          type: 'product_image',\n          imageUrl: imageUrl,\n          caption: captionText, // ส่งข้อความไปด้วย (เผื่อใช้)\n          senderId: $('Extract Event2').first().json.senderId,\n          pageId: $('Extract Event2').first().json.pageId\n        }\n      }\n    ];\n  }\n}\n\n// 3. ถ้าไม่ใช่ทั้ง QR และรูปภาพ = ส่งเป็นข้อความปกติ (Empty Array เพื่อให้ Workflow ไปเส้นทางอื่น หรือจบ process)\nreturn [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        688
+      ],
+      "id": "369cd95b-83dc-4189-92e6-0a12dd53097c",
+      "name": "Route QR or Image1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.type }}",
+              "rightValue": "qr",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        816,
+        688
+      ],
+      "id": "c60ffebb-9aac-46ea-894c-549ee3528d43",
+      "name": "Is QR?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"image\",\n      \"payload\": {\n        \"url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774088373/QR_new_qotdmx.jpg\",\n        \"is_reusable\": true\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        592
+      ],
+      "id": "feac6d6e-2ca9-4641-a599-e1329d48f6b7",
+      "name": "Send QR Image"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Extract Event2').first().json.senderId }}\"\n  },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"text\": \"โอนแล้วแจ้ง ชื่อ ที่อยู่ และเบอร์โทรศัพท์ เพื่อจัดส่งได้เลยครับ\"\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        592
+      ],
+      "id": "ea9b0807-911e-495f-840c-0aa85f6c1193",
+      "name": "Send QR Text"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $json.senderId }}\"\n  },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"image\",\n      \"payload\": {\n        \"url\": \"{{ $json.imageUrl.toString().split('\\\\n')[0].trim() }}\",\n        \"is_reusable\": true\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        784
+      ],
+      "id": "bf8a119a-419b-4988-a83d-89a9aa49842e",
+      "name": "Send Product Image"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=ลูกค้าพิมพ์: {{ $json.text }}\n\nข้อมูลลูกค้า:\n- ชื่อ Facebook: {{ $json.senderFullName }}\n- Sender ID: {{ $json.senderId }}\n- วันที่ปัจจุบัน: {{ $json.currentDate }}",
+        "options": {
+          "systemMessage": "คุณคือ AI Assistant สำหรับร้าน บ้านรวมทะเล (Baan Ruam Talay)\nมีหน้าที่จำกัดเฉพาะ 3 อย่างเท่านั้น และต้องตอบจากข้อมูลด้านล่างนี้เท่านั้น ห้ามตอบจากความรู้ของ AI เอง\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\n📦 ข้อมูลสินค้าและราคา\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🐙 อาหารทะเลแปรรูป\n| สินค้า                     | ครึ่งโล (฿) | 1 โล (฿) | หมายเหตุ |\n|----------------------------|-------------|----------|---------|\n| A4 ไซส์ใหญ่               | 500         | 950      |         |\n| A5 ไซส์กลาง               | 450         | 790      |         |\n| A6 ไซส์เล็ก               | 390         | 690      |         |\n| หมึกผ่าเรือไซส์ 2 นิ้ว    | 450         | 800      |         |\n| หมึกผ่าเรือไซส์ 3 นิ้ว    | 500         | 900      |         |\n| หมึกผ่าเรือไซส์ 4 นิ้ว    | 550         | 990      |         |\n| หมึกเจาะตาคัดพิเศษ        | 420         | 750      |         |\n| หมึกแพ                     | 430         | 790      |         |\n| หมึกกะตอยต้ม              | 280         | 490      |         |\n| หมึกกะตอยแห้ง       | 390         | 690      |         |\n| หนวดหมึกแห้ง              | 370         | 670      |         |\n| ปลาช่อนทะเลจืด            | 200         | 370      |         |\n| ปลาปะกัง                  | 200         | 360      |         |\n| ปลาแก้วผ่า                | 250         | 430      |         |\n| ปลาข้าวสาร                | 250         | 430      |         |\n| กุ้งวังไซส์ใหญ่ (จืด)    | 500         | 950      |         |\n| กุ้งวังไซส์เล็ก (จืด)    | 470         | 890      |         |\n| ปลาข้างเหลืองไม่งา        | 180         | 290      |         |\n| ปลาข้างเหลืองโรยงา        | 180         | 290      |         |\n| ปลาวงแก้วจืด              | 420         | 790      |         |\n| ปลากระเบนหวาน             | 250         | 430      |         |\n| ปลาทูมันเค็มน้อย          | -           | 199      | 4 ตัว/โล |\n| ปลาทูหอมเค็ม              | -           | 199      | 10-12 ตัว/โล |\n| หมึกทวิสตี้                | 550         | 990      |         |\n| ปลาซิวทอด                 | 190         | 350      |         |\n| หมึกเต่าทองรสดั้งเดิม     | 590         | 1050     |         |\n| หมึกเต่าทองรสเผ็ด         | 590         | 1050     |         |\n| หมึกผ่า A4 (ไซส์ใหญ่)    | 500         | 950      |         |\n| ปลาเกล็ดขาวทอดกรอบ        | 220         | 390      |         |\n| หมึกราดน้ำจิ้มสามรส       | 390         | 690      |         |\n| หมึกอบเนยพรีเมียม          | 750         | 1400     |         |\n| กุนเชียง (หมู,ไก่,ปลา)   | 120         | 200      |         |\n| หมึกแห้งคัดไซส์กลาง       | 300         | 580      |         |\n| กุ้งแห้งเปลือก             | 300         | 690      |         |\n| หมึกผ่าเรือไซส์ 5 นิ้ว    | 600         | 1100     |         |\n\n🍖 อาหารพร้อมทาน\n| สินค้า                     | ครึ่งโล (฿) | 1 โล (฿) | หมายเหตุ |\n|----------------------------|-------------|----------|---------|\n| หมูฝอยนุ่มคลุกหอมเจียว    | 290         | 490      |         |\n| หมูสวรรค์โรยงา            | 290         | 490      |         |\n| หมูหยอง                   | 290         | 490      |         |\n| ปลากระพงทุบ               | 340         | 590      |         |\n| ปลาเก๋าทุบ                | 340         | 590      |         |\n| ปลาเห็ดโคลนทุบ            | 340         | 590      |         |\n| หมึกหยองหิมะ              | 340         | 590      |         |\n| หมึกหยองเชอรี่            | 340         | 590      |         |\n| ปลากรอบสมุนไพร            | 170         | 290      |         |\n| ปลากรอบงา                 | 170         | 290      |         |\n| ปลากรอบดั้งเดิม           | 170         | 290      |         |\n| ขนมตัวปลาหวาน             | 120         | 200      |         |\n| ปลาเส้นทาโร่เกรด A        | 190         | 350      |         |\n| หมึกกะตอยฉาบ 3 รส         | 260         | 450      | กล่อง 170 กรัม: 150 บ. |\n| หมึกผ่าฉาบ 3 รส           | 260         | 450      | กล่อง 170 กรัม: 150 บ. |\n| กุ้งอบกรอบ                | 300         | 550      | กล่อง 170 กรัม: 150 บ. |\n| หอยลายอบกรอบ              | 300         | 550      | กล่อง 170 กรัม: 150 บ. |\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\n❓ FAQ — คำถามและคำตอบสำเร็จรูป\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\nQ: ร้านอยู่ที่ไหน / สินค้ามาจากไหน?\nA: หน้าร้านอยู่ท่าฉลอม สมุทรสาครครับ📍 https://maps.app.goo.gl/4gjN15DxR9LBfwRS8\nคำที่ต้องจับ: ที่อยู่, อยู่ไหน, หน้าร้าน\n\nQ: ขอพิกัดหน้าร้าน / โลเคชั่น / ตำแหน่ง?\nA: หน้าร้านอยู่ท่าฉลอม สมุทรสาครครับ📍 https://maps.app.goo.gl/4gjN15DxR9LBfwRS8\nคำที่ต้องจับ: โลเคชั่น, ตำแหน่ง\n\nQ: ส่งของทุกวันไหม / ตัดรอบกี่โมง?\nA: ทางร้านจัดส่งทุกวันครับ ตัดรอบจัดส่งก่อน 13.00น ครับ📦\nคำที่ต้องจับ: ตัดรอบ, ทันมั้ย\n\nQ: ใช้ขนส่งอะไร?\nA: ขนส่ง SPX Express และ Flash ครับ📦\nคำที่ต้องจับ: ขนส่ง, SPX, SPX Express, Flash, แฟรช\n\nQ: กี่วันถึง / ระยะเวลาจัดส่ง?\nA: กรุงเทพฯ และปริมณฑล 1-2 วัน และ ต่างจังหวัด 2-3 วัน ขึ้นอยู่กับสาขาปลายทางครับ ⭐️ (ลูกค้าสามารถเช็คสถานะพัสดุได้ด้วยตัวเองจากลิงค์พัสดุที่แจ้งได้เลยครับ)\nคำที่ต้องจับ: กี่วันถึง, ระยะเวลา, ถึงวันไหน\n\nQ: วิธีเก็บรักษา / เก็บได้กี่วัน / เก็บนานมั้ย?\nA: ระบบจะส่งรูปวิธีเก็บรักษาให้อัตโนมัติแล้วครับ ไม่ต้องตอบคำถามนี้\nคำที่ต้องจับ: วิธีเก็บรักษา, เก็บนานมั้ย, เก็บได้กี่วัน\n\nQ: เช็คสถานะพัสดุ?\nA: แอดมินเช็คให้นะครับ🙏🏻 (ลูกค้าสามารถเช็คสถานะพัสดุได้ด้วยตัวเองจากลิงค์พัสดุที่แจ้งได้เลยครับ)\nคำที่ต้องจับ: พัสดุ, ยังไม่ถึง, นานมาก, ของถึงไหนแล้ว\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\n⭐️ รูปแบบพิเศษ — สินค้าที่มีหลาย Variant\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n🔴 เมื่อลูกค้าถามราคา \"หมึกผ่าเรือ\" หรือ \"หมึกเรือไทย\" หรือ \"หมึกเรือ\"\n→ ต้องตอบด้วยรูปแบบนี้เท่านั้น (คัดลอกทั้งหมดตรงๆ):\n\nหมึกเรือไทย\n2 นิ้ว - ครึ่งกิโลกรัม - 450 บาท\n2 นิ้ว - หนึ่งกิโลกรัม - 800 บาท\n\n3 นิ้ว - ครึ่งกิโลกรัม - 500 บาท (ขายดี⭐️)\n3 นิ้ว - หนึ่งกิโลกรัม - 900 บาท (ขายดี⭐️)\n\n4 นิ้ว - ครึ่งกิโลกรัม - 550 บาท\n4 นิ้ว - หนึ่งกิโลกรัม - 990 บาท\n\n5 นิ้ว - ครึ่งกิโลกรัม - 600 บาท\n5 นิ้ว - หนึ่งกิโลกรัม - 1,100 บาท\n\n⭐️ลูกค้าสนใจสามารถแจ้งจำนวนที่ต้องการและที่อยู่เบอร์ติดต่อสำหรับจัดส่งได้เลยครับ\n(แอดมินจะสรุปยอดให้อีกทีก่อนจัดส่งนะครับ) ⭐️🙏🏻\n\n---\n\n🔴 เมื่อลูกค้าถามราคา \"หมึกผ่า\" หรือ \"หมึก A\" หรือ \"A4 A5 A6\" หรือ \"หมึกผ่าเวียดนาม\"\n→ ต้องตอบด้วยรูปแบบนี้เท่านั้น (คัดลอกทั้งหมดตรงๆ):\n\nหมึกผ่าเวียดนาม\nA6 - ครึ่งกิโลกรัม - 390 บาท (ขายดี⭐️)\nA6 - หนึ่งกิโลกรัม - 690 บาท\n\nA5 - ครึ่งกิโลกรัม - 450 บาท (ขายดี⭐️)\nA5 - หนึ่งกิโลกรัม - 790 บาท\n\nA4 - ครึ่งกิโลกรัม - 500 บาท\nA4 - หนึ่งกิโลกรัม - 950 บาท\n\n⭐️ลูกค้าสนใจสามารถแจ้งจำนวนที่ต้องการและที่อยู่เบอร์ติดต่อสำหรับจัดส่งได้เลยครับ\n(แอดมินจะสรุปยอดให้อีกทีก่อนจัดส่งนะครับ) ⭐️🙏🏻\n\n⚠️ กฎสำคัญสำหรับสินค้า 2 รายการนี้:\n- ต้องแสดงทุก Variant พร้อมกันเสมอ ห้ามแสดงแค่บางไซส์\n- ต้องมีข้อความ CTA ท้ายเสมอ\n- ห้ามตอบแบบตารางหรือรูปแบบอื่น\n\n---\n\n🔵 รูปแบบตอบราคาสินค้า (ใช้กับทุกกรณีที่ตอบราคา)\n→ ต้องตอบด้วยรูปแบบนี้เสมอ:\n\nกรณีสินค้าปกติ (ไม่มีกล่อง):\n[ชื่อสินค้า]\n\nครึ่งกิโลกรัม - [ราคาครึ่งโล] บาท (ขายดี⭐️)\nหนึ่งกิโลกรัม - [ราคา 1 โล] บาท\n\n⭐️ ลูกค้าสนใจสามารถแจ้งจำนวนที่ต้องการและที่อยู่เบอร์ติดต่อสำหรับจัดส่งได้เลยครับ\n(แอดมินจะสรุปยอดให้อีกทีก่อนจัดส่งนะครับ) 🙏🏻⭐️\n\n---\nกรณีสินค้ามีกล่อง (หมึกกะตอยฉาบ 3 รส / หมึกผ่าฉาบ 3 รส / กุ้งอบกรอบ / หอยลายอบกรอบ):\n[ชื่อสินค้า]\n\nกล่อง 170 กรัม - 150 บาท (ขายดี⭐️)\nครึ่งกิโลกรัม - [ราคาครึ่งโล] บาท\nหนึ่งกิโลกรัม - [ราคา 1 โล] บาท\n\n⭐️ ลูกค้าสนใจสามารถแจ้งจำนวนที่ต้องการและที่อยู่เบอร์ติดต่อสำหรับจัดส่งได้เลยครับ\n(แอดมินจะสรุปยอดให้อีกทีก่อนจัดส่งนะครับ) 🙏🏻⭐️\n\n---\nตัวอย่างสินค้าปกติ:\nหมึกกะตอยต้ม\n\nครึ่งกิโลกรัม - 280 บาท (ขายดี⭐️)\nหนึ่งกิโลกรัม - 490 บาท\n\n⭐️ ลูกค้าสนใจสามารถแจ้งจำนวนที่ต้องการและที่อยู่เบอร์ติดต่อสำหรับจัดส่งได้เลยครับ\n(แอดมินจะสรุปยอดให้อีกทีก่อนจัดส่งนะครับ) 🙏🏻⭐️\n\n---\nตัวอย่างสินค้ามีกล่อง:\nหอยลายอบกรอบ\n\nกล่อง 170 กรัม - 150 บาท (ขายดี⭐️)\nครึ่งกิโลกรัม - 300 บาท\nหนึ่งกิโลกรัม - 550 บาท\n\n⭐️ ลูกค้าสนใจสามารถแจ้งจำนวนที่ต้องการและที่อยู่เบอร์ติดต่อสำหรับจัดส่งได้เลยครับ\n(แอดมินจะสรุปยอดให้อีกทีก่อนจัดส่งนะครับ) 🙏🏻⭐️\n\n⚠️ กฎสำหรับรูปแบบนี้:\n- ใช้รูปแบบนี้กับทุกการตอบราคา ไม่ว่าลูกค้าจะถามหรือกด Postback\n- ดึงราคาจากตารางสินค้าด้านบนเสมอ\n- ถ้าสินค้าไม่มีราคาครึ่งโล (เช่น ปลาทู) ให้ข้ามบรรทัดนั้นไป\n- ห้ามเพิ่มหรือลด emoji / ข้อความ CTA\n\n---\n\n🟡 เมื่อลูกค้ากด \"สนใจขนมตัวปลาหวาน\" หรือถามราคาขนมตัวปลาหวาน\n→ ตอบตามรูปแบบปกติ (ครึ่งโลใส่ขายดี⭐️):\n\nขนมตัวปลาหวาน\n\nครึ่งกิโลกรัม - 120 บาท (ขายดี⭐️)\nหนึ่งกิโลกรัม - 200 บาท\n\n⭐️ ลูกค้าสนใจสามารถแจ้งจำนวนที่ต้องการและที่อยู่เบอร์ติดต่อสำหรับจัดส่งได้เลยครับ\n(แอดมินจะสรุปยอดให้อีกทีก่อนจัดส่งนะครับ) 🙏🏻⭐️\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\n🎯 หน้าที่ของคุณ (3 อย่างเท่านั้น)\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n1️⃣ ตอบราคาสินค้า\n   - สินค้าที่มีรูปแบบพิเศษ (หมึกผ่าเรือ / หมึกผ่าเวียดนาม) → ใช้รูปแบบด้านบนเท่านั้น\n   - สินค้าอื่น → ค้นจากตารางด้านบน แสดงราคาครึ่งโลและ 1 โล พร้อม Note (ถ้ามี)\n   - ถ้าไม่พบในตาราง → แจ้ง Admin Alert ทันที\n   - 🚫 ห้ามตอบราคา 1.5 โล, 2.5 โล, 3.5 โล (ทศนิยม .5)\n\n2️⃣ ส่งรูปสินค้า\n   - ใช้ Tool \"Fetch Product Data\" เพื่อดึง Image_URL จาก Google Sheet\n   - ตอบในรูปแบบ: IMAGE|[URL]\n   - 🚫 ห้ามมีข้อความอื่นใดในข้อความเดียวกัน — IMAGE|URL ต้องอยู่คนเดียวเท่านั้น\n   - 🚫 ห้ามเดา URL เอง ต้องดึงจาก Tool เท่านั้น\n   - 🚫 ถ้าลูกค้าขอดูรูปพร้อมกับถามราคา → ตอบราคาอย่างเดียวก่อน อย่าส่ง IMAGE| ปนในข้อความเดียวกัน\n\n3️⃣ ตอบ FAQ\n   - ค้นจากรายการ FAQ ด้านบนเท่านั้น\n   - 🚫 ห้ามตอบจากความรู้ของ AI เอง\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\n📢 กฎ CTA\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\nCTA ฝังอยู่ในรูปแบบตอบราคาแล้ว (ดูด้านบน)\n🚫 ไม่ต้องใส่ CTA เมื่อ: ตอบ FAQ / ส่งรูป (IMAGE|...) / Admin Alert\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\n🚨 กฎ Admin Alert\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\nถ้าลูกค้าทำสิ่งเหล่านี้ → ตอบด้วยข้อความนี้ทันที:\n\"🚨Admin Alert {{ $json.senderFullName }} ต้องการความช่วยเหลือ\nระบบกำลังตามแอดมินมาช่วยตอบให้นะครับ รบกวนรอสักครู่ครับ\"\n\nเคสที่ต้อง Alert:\n❌ สั่งซื้อสินค้า เช่น \"เอาหมึก 1 โล\"\n❌ แจ้งชื่อ ที่อยู่ เบอร์โทร\n❌ ต่อรองราคา\n❌ ถามเรื่องที่ไม่มีในตาราง FAQ และไม่ใช่ราคา/รูป/QR\n❌ ถามเรื่องคืนสินค้า ร้องเรียน\n\n━━━━━━━━━━━━━━━━━━━━━━━━━\n📤 รูปแบบ Output สรุป\n━━━━━━━━━━━━━━━━━━━━━━━━━\n\n| สถานการณ์     | Output                       |\n|--------------|------------------------------|\n| ถามราคา       | ชื่อสินค้า + ราคา + CTA ⭐️   |\n| ขอรูปสินค้า   | IMAGE|https://... (คนเดียว ห้ามมีข้อความอื่น) |\n| ถาม FAQ       | คำตอบจาก FAQ ด้านบน + \"ครับ\" |\n| นอกเหนือ 4 อย่าง | 🚨Admin Alert ...           |"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        16,
+        832
+      ],
+      "id": "5a0e0855-02da-4e21-a98c-e2d14dc3c2d5",
+      "name": "AI Sales Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Extract Event2').first().json.senderId }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        64,
+        1088
+      ],
+      "id": "10bd036c-75cc-4bc5-ac73-92db883ab581",
+      "name": "Memory1"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-flash-latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -96,
+        1056
+      ],
+      "id": "8184248d-a676-4bdc-9d55-4cf6292d0254",
+      "name": "Google Gemini Chat Model"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "QR",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "id": "qr-check-1"
+            },
+            {
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "IMAGE",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "id": "image-check-1"
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        368,
+        832
+      ],
+      "id": "e2573853-f0e6-46c7-8a97-a3a5458428df",
+      "name": "Is QR or Image?1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// Safe AI Response Handler\n// ป้องกัน Error จาก Empty Message + ตรวจจับ ADMIN_ALERT\n// ==========================================\n\nconst items = $input.all();\n\n// ดึงข้อมูลจาก AI Agent\nconst aiResponse = items[0].json;\n\n// ลองดึง output จากหลายแหล่ง\nlet message = aiResponse.output \n           || aiResponse.text \n           || aiResponse.response \n           || aiResponse.message\n           || '';\n\n// ทำความสะอาดข้อความ\nmessage = String(message).trim();\n\nconsole.log('=== AI OUTPUT ===');\nconsole.log(message);\nconsole.log('=================');\n\n// ตรวจสอบว่าเป็น ADMIN_ALERT หรือไม่\nif (message.startsWith('🚨Admin Alert')) {\n  // แยกชื่อ Facebook ออกมา\n  const customerName = message.replace('🚨Admin Alert', '').replace('ต้องการความช่วยเหลือ', '').trim();\n  \n  console.log('🚨 ADMIN ALERT DETECTED!');\n  console.log('Customer:', customerName);\n  \n  // ไม่ส่งข้อความให้ลูกค้า เพียงแค่แจ้ง Telegram\n  // ส่ง flag ว่าเป็น Admin Alert แต่ไม่มี message\n  return [{\n    json: {\n      senderId: $('Extract Event2').first().json.senderId,\n      pageId: $('Extract Event2').first().json.pageId,\n      message: '', // ไม่ส่งข้อความใดๆ\n      isAdminAlert: true,\n      customerName: customerName,\n      senderFullName: $('Extract Event2').first().json.senderFullName || customerName,\n      skipSendMessage: true // flag เพื่อข้ามการส่งข้อความ\n    }\n  }];\n}\n\n// ตรวจสอบว่าข้อความว่างหรือไม่\nif (!message || message === '') {\n  // ส่งข้อความสำรอง\n  return [{\n    json: {\n      senderId: $('Extract Event2').first().json.senderId,\n      pageId: $('Extract Event2').first().json.pageId,\n      message: 'ขอโทษครับ มีปัญหาเล็กน้อย กรุณาถามใหม่อีกครั้งนะครับ',\n      isAdminAlert: false,\n      skipSendMessage: false\n    }\n  }];\n}\n\n// ส่งข้อความปกติ\nreturn [{\n  json: {\n    senderId: $('Extract Event2').first().json.senderId,\n    pageId: $('Extract Event2').first().json.pageId,\n    message: message,\n    isAdminAlert: false,\n    skipSendMessage: false\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        592,
+        1024
+      ],
+      "id": "a0a9084e-e78b-4755-a68c-615e6570cd5f",
+      "name": "Filter AI Response1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_pLBHI2hUFUbX8aO0pXtVOSFz-HJ9lgWdQPk89WB9hM",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Product",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_pLBHI2hUFUbX8aO0pXtVOSFz-HJ9lgWdQPk89WB9hM/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        256,
+        1056
+      ],
+      "id": "533948e9-bbf6-406f-a4a6-82602c0e16f5",
+      "name": "Fetch Product Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $('Extract Event2').first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": { \n    \"text\": \"สวัสดีครับ 🐟 บ้านรวมทะเล ยินดีต้อนรับครับผม ✨\\n✅ มีบริการเก็บเงินปลายทาง ไม่บวกเพิ่ม\\n✅ การันตีสินค้าตรงปกแน่นอนคร้าบ 💖\\n⭐️ดูรายการสินค้าทั้งหมด กดรูปสุดท้าย ได้เลยครับ\" \n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        -48
+      ],
+      "id": "28af69ef-849c-40da-9b10-b00ac5b3d8b4",
+      "name": "Send Welcome"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $('Extract Event2').first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"หมูฝอยนุ่มคลุกหอมเจียว\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696947/38_gvzawf.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูฝอยนุ่ม\", \"payload\": \"สนใจหมูฝอยนุ่มคลุกหอมเจียว\" }] },\n          { \"title\": \"ปลาช่อนทะเลจืด\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774072952/Best_15_u8pcsu.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูสวรรค์โรยงา\", \"payload\": \"สนใจปลาช่อนทะเลจืด\" }] },\n          { \"title\": \"ปลากระพงทุบ\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774072952/Best_29_vz2png.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากรอบสมุนไพร\", \"payload\": \"สนใจปลากระพงทุบ\" }] },\n          { \"title\": \"หมึก A4, A5, A6\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696952/41_hiwxfr.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึก A4, A5, A6\", \"payload\": \"สนใจหมึก A4, A5, A6\" }] },\n          { \"title\": \"หมึกผ่าเรือไซส์ 2 นิ้ว ,3 นิ้ว, 4 นิ้ว\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696955/42_f9hoid.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกผ่าเรือ\", \"payload\": \"สนใจหมึกผ่าเรือไซส์ 2 นิ้ว ,3 นิ้ว, 4 นิ้ว\" }] },\n          { \"title\": \" \", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774072658/ALL_hjhp0k.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"ดูสินค้าทั้งหมด\", \"payload\": \"คลิ๊กดูสินค้า\" }] }\n        ]\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        -48
+      ],
+      "id": "dd59182a-0237-4852-8538-02f97b58484b",
+      "name": "Send Best Sellers"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $('Extract Event2').first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": { \"text\": \"⠀\\n🐙 อาหารทะเลแปรรูป\\n⠀\" }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        160
+      ],
+      "id": "8fd232ae-ef46-4485-96d1-3baaf99436c8",
+      "name": "Category 1 Header"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"หมึก A4, A5, A6\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696891/1_pt4dsc.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึก A4, A5, A6\", \"payload\": \"สนใจหมึก A4, A5, A6\" }] },\n          { \"title\": \"หมึกผ่าเรือไซส์ 2-4 นิ้ว\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696891/2_lpevos.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกผ่าเรือ\", \"payload\": \"สนใจหมึกผ่าเรือไซส์ 2 นิ้ว ,3 นิ้ว, 4 นิ้ว\" }] },\n          { \"title\": \"หมึกผ่าเรือไซส์ 5 นิ้ว\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074137/Menu_for_AI_66_kxtktr.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกผ่าเรือ 5 นิ้ว\", \"payload\": \"สนใจหมึกผ่าเรือไซส์ 5 นิ้ว\" }] },\n          { \"title\": \"หมึกเจาะตาคัดพิเศษ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696892/3_x2qy1q.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกเจาะตาคัดพิเศษ\", \"payload\": \"สนใจหมึกเจาะตาคัดพิเศษ\" }] },\n          { \"title\": \"หมึกแพ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696893/4_xkcahr.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกแพ\", \"payload\": \"สนใจหมึกแพ\" }] },\n          { \"title\": \"หมึกกะตอยต้ม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696895/6_xu1kbq.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกกะตอยต้ม\", \"payload\": \"สนใจหมึกกะตอยต้ม\" }] },\n          { \"title\": \"หมึกกะตอยแห้ง\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074517/Menu_for_AI_10_ldjz3x.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกกะตอยแห้ง\", \"payload\": \"สนใจหมึกกะตอยแห้ง\" }] },\n          { \"title\": \"หนวดหมึกแห้ง\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074137/Menu_for_AI_11_derzpi.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหนวดหมึกแห้ง\", \"payload\": \"สนใจหนวดหมึกแห้ง\" }] },\n          { \"title\": \"ปลาทูมันเค็มน้อย\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696914/19_fypo0b.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาทูมันเค็มน้อย\", \"payload\": \"สนใจปลาทูมันเค็มน้อย\" }] },\n          { \"title\": \"ปลาทูหอมเค็ม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696915/20_k5q7ps.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาทูหอมเค็ม\", \"payload\": \"สนใจปลาทูหอมเค็ม\" }] }\n        ]\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        368,
+        160
+      ],
+      "id": "17f29fbc-c508-4bf7-939a-44e59fdd3c67",
+      "name": "Category 1 Row 1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"ปลาช่อนทะเลจืด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696901/11_prwvcm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาช่อนทะเลจืด\", \"payload\": \"สนใจปลาช่อนทะเลจืด\" }] },\n          { \"title\": \"ปลาข้างเหลืองโรยงา/ไม่งา\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696909/16_rihfbj.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาข้างเหลือง\", \"payload\": \"สนใจปลาข้างเหลืองโรยงา/ไม่งา\" }] },\n          { \"title\": \"ปลาแก้วผ่า\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074517/Menu_for_AI_18_agrzu6.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาแก้วผ่า\", \"payload\": \"สนใจปลาแก้วผ่า\" }] },\n          { \"title\": \"ปลาปะกัง\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696903/12_sxzu9l.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาปะกัง\", \"payload\": \"สนใจปลาปะกัง\" }] },\n          { \"title\": \"ปลาข้าวสาร\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696906/14_pps7sf.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาข้าวสาร\", \"payload\": \"สนใจปลาข้าวสาร\" }] },\n          { \"title\": \"ปลาวงแก้วจืด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696910/17_qf84om.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาวงแก้วจืด\", \"payload\": \"สนใจปลาวงแก้วจืด\" }] },\n          { \"title\": \"ปลากระเบนหวาน\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696912/18_mwszfm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากระเบนหวาน\", \"payload\": \"สนใจปลากระเบนหวาน\" }] },\n          { \"title\": \"กุ้งวัง ใหญ่/เล็ก (จืด)\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696907/15_xl4xqq.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุ้งวัง\", \"payload\": \"สนใจกุ้งวัง ใหญ่/เล็ก  (จืด)\" }] },\n          { \"title\": \"กุ้งแห้งเปลือก\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074138/Menu_for_AI_65_yrzmz4.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุ้งแห้งเปลือก\", \"payload\": \"สนใจกุ้งแห้งเปลือก\" }] },\n          { \"title\": \"กุนเชียง (หมู,ไก่,ปลา)\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754021/53_ifiyk3.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุนเชียง\", \"payload\": \"สนใจกุนเชียง (หมู,ไก่,ปลา)\" }] }\n        ]\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        592,
+        160
+      ],
+      "id": "1d534530-1ce3-418d-947c-f6f5de919cd0",
+      "name": "Category 1 Row 2"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $('Extract Event2').first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": { \"text\": \"⠀\\n🍖 อาหารแปรรูปพร้อมทาน\\n⠀\" }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        816,
+        160
+      ],
+      "id": "4281430d-3600-43c6-b103-005e95b8e9f2",
+      "name": "Category 2 Header"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isGreeting }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        -48
+      ],
+      "id": "64d090bc-5bc2-4c62-95bb-99abb56ff7af",
+      "name": "Is Greeting?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.skip }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -432,
+        352
+      ],
+      "id": "a5ce9a1b-6830-4def-a19a-655f9ba4f131",
+      "name": "Should Process?1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isShowAll }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        160
+      ],
+      "id": "a4187339-34de-4450-a139-99dec36e9820",
+      "name": "Is Show All?1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isShowAll }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "id": "d4a782d5-26f2-43f9-a450-045b3e542a43"
+            },
+            {
+              "id": "c845933d-4085-4051-ba09-5d3a3a296968",
+              "leftValue": "={{ $json.isGreeting }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        832
+      ],
+      "id": "9e687505-a7ca-4ef6-ab81-90e5a7965d5a",
+      "name": "Is Al?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Simple mock response instead of calling Facebook API\nreturn [\n  {\n    json: {\n      skip: false,\n      name: 'ลูกค้า',\n      first_name: 'ลูก',\n      last_name: 'ค้า'\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        352
+      ],
+      "id": "7fa45bbe-53f5-4e5b-b44d-0ca2e64b9a4a",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const eventData = $('Extract Event2').first().json;\nconst profileData = $input.first().json;\n\n// ดึงวันที่ปัจจุบัน\nconst now = new Date();\nconst day = String(now.getDate()).padStart(2, '0');\nconst month = String(now.getMonth() + 1).padStart(2, '0');\nconst year = now.getFullYear();\nconst currentDate = `${day}/${month}/${year}`;\n\nreturn {\n  json: {\n    ...eventData,\n    senderFullName: profileData.name || \n                    `${profileData.first_name || ''} ${profileData.last_name || ''}`.trim() ||\n                    'ลูกค้า',\n    currentDate: currentDate\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -656,
+        352
+      ],
+      "id": "fc2fa860-25e9-4ccb-88f4-93fedb19a94c",
+      "name": "Merge Code Node:"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// Extract Messenger Event - รองรับ Message, Postback, Referral, Optin\n// ==========================================\n\nconst body = $input.first().json.body;\n\nif (!body?.entry?.[0]?.messaging?.[0]) {\n  return { json: { skip: true, reason: 'invalid' } };\n}\n\nconst entry = body.entry[0];\nconst event = entry.messaging[0];\n\n// ==========================================\n// 🆕 รองรับ Referral Event (มาจากโฆษณา, โพสต์, คอมเมนต์)\n// ==========================================\nif (event.referral || event.optin) {\n  return {\n    json: {\n      skip: false,\n      senderId: event.sender.id,\n      pageId: entry.id,\n      text: 'สวัสดี',\n      originalText: 'สวัสดี',\n      isGreeting: true,     // ← ส่ง Greeting ทันที\n      isShowAll: false,\n      isQR: false,\n      isStorage: false,\n      isPostback: false,\n      isMessage: true,\n      isAdminCommand: false,\n      adminCommandType: null,\n      timestamp: event.timestamp,\n      source: event.referral?.source || event.optin?.ref || 'referral'\n    }\n  };\n}\n\n// ==========================================\n// Admin Echo Commands\n// ==========================================\nconst isAdminEcho = event.message?.is_echo === true;\nconst adminText = isAdminEcho ? (event.message?.text || '').trim() : '';\n\nif (isAdminEcho) {\n  let adminCommandType = null;\n\n  if (adminText === '/สรุป') {\n    adminCommandType = 'summarize';\n  // 🔄 เปลี่ยนจาก /รายการ → สวัสดีครับ / สวัสดีค่ะ\n  } else if (adminText === 'สวัสดีครับ' || adminText === 'สวัสดีค่ะ') {\n    adminCommandType = 'greeting';\n  // 🔄 เปลี่ยนจาก /ทั้งหมด → /สินค้า\n  } else if (adminText === '/สินค้า') {\n    adminCommandType = 'show_all';\n  } else if (adminText === '/qr') {\n    adminCommandType = 'qr';\n  } else if (adminText === '/เก็บรักษา') {\n    adminCommandType = 'storage';\n  }\n\n  if (adminCommandType) {\n    return {\n      json: {\n        skip: false,\n        senderId: event.recipient.id,\n        pageId: entry.id,\n        text: adminText,\n        originalText: adminText,\n        isAdminCommand: true,\n        adminCommandType: adminCommandType,\n        isGreeting: adminCommandType === 'greeting',\n        isShowAll: adminCommandType === 'show_all',\n        isQR: adminCommandType === 'qr',\n        isStorage: adminCommandType === 'storage',\n        isPostback: false,\n        isMessage: true,\n        timestamp: event.timestamp\n      }\n    };\n  }\n\n  return { json: { skip: true, reason: 'echo_not_command' } };\n}\n\n// ==========================================\n// Skip system events\n// ==========================================\nif (event.delivery || event.read) {\n  return { json: { skip: true, reason: 'system' } };\n}\n\nconst isPostback = !!event.postback;\nconst isMessage = !!event.message;\n\nconst rawText = event.message?.text || event.postback?.payload || '';\nconst text = rawText.trim().toLowerCase();\nconst originalText = rawText.trim();\n\nif (!text) {\n  return { json: { skip: true, reason: 'empty' } };\n}\n\n// ==========================================\n// 🆕 GET_STARTED Postback → ส่ง Greeting ทันที\n// ==========================================\nif (event.postback?.payload === 'GET_STARTED') {\n  return {\n    json: {\n      skip: false,\n      senderId: event.sender.id,\n      pageId: entry.id,\n      text: text,\n      originalText: originalText,\n      isGreeting: true,   // ← ส่ง Greeting ทันที\n      isShowAll: false,\n      isQR: false,\n      isStorage: false,\n      isPostback: true,\n      isMessage: false,\n      isAdminCommand: false,\n      adminCommandType: null,\n      timestamp: event.timestamp\n    }\n  };\n}\n\n// ==========================================\n// Greeting & ShowAll Pattern Matching (เหมือนเดิม)\n// ==========================================\nconst greetingPatterns = [\n  'hi', 'hello', 'hey', 'yo',\n  'สวัสดี', 'สวัสดีครับ', 'สวัสดีค่ะ', 'สวัสดีคับ', 'สวัสดีจ้า',\n  'หวัดดี', 'หวัดดีครับ', 'หวัดดีค่ะ',\n  'ดี', 'ดีครับ', 'ดีค่ะ', 'ดีจ้า',\n  'ว่าไง', 'ไง', 'เฮ้', 'ฮัลโหล', 'ฮาย',\n  'get start', 'get started', 'menu', 'เมนู', 'เริ่ม', 'เริ่มต้น', 'บ้านรวมทะเล'\n];\n\n// 🔄 เปลี่ยนจาก /ทั้งหมด → /สินค้า ในส่วนของลูกค้าพิมพ์เอง\nconst showAllPatterns = [\n  'ดูสินค้าทั้งหมด', 'สินค้าทั้งหมด',\n  'มีสินค้าอื่นอีกไหม', 'มีสินค้าอื่นไหม',\n  'มีอะไรอีก', 'ดูเพิ่ม', 'ดูเพิ่มเติม',\n  'show all', 'view all', '/สินค้า'  // ← เพิ่ม /สินค้า\n];\n\nfunction getSimilarity(s1, s2) {\n  let longer = s1.length >= s2.length ? s1 : s2;\n  let shorter = s1.length < s2.length ? s1 : s2;\n  const longerLength = longer.length;\n  if (longerLength === 0) return 1.0;\n  const costs = new Array();\n  for (let i = 0; i <= longer.length; i++) {\n    let lastValue = i;\n    for (let j = 0; j <= shorter.length; j++) {\n      if (i == 0) costs[j] = j;\n      else if (j > 0) {\n        let newValue = costs[j - 1];\n        if (longer.charAt(i - 1) != shorter.charAt(j - 1))\n          newValue = Math.min(Math.min(newValue, lastValue), costs[j]) + 1;\n        costs[j - 1] = lastValue;\n        lastValue = newValue;\n      }\n    }\n    if (i > 0) costs[shorter.length] = lastValue;\n  }\n  return (longerLength - costs[shorter.length]) / longerLength;\n}\n\nlet isGreeting = false;\nlet isShowAll = false;\nconst THRESHOLD = 0.75;\nconst firstWord = text.split(' ')[0];\n\nfor (let pattern of greetingPatterns) {\n  const scoreFull = getSimilarity(text, pattern);\n  const scoreFirstWord = (!pattern.includes(' ')) ? getSimilarity(firstWord, pattern) : 0;\n  const isThai = /[ก-๙]/.test(pattern);\n  const startsWithThai = isThai && text.startsWith(pattern);\n  if (scoreFull >= THRESHOLD || scoreFirstWord >= THRESHOLD || startsWithThai) {\n    isGreeting = true;\n    break;\n  }\n}\n\n\n// QR Payment Pattern Matching\nconst qrPatterns = ['qr', '/qr', 'สแกนจ่าย', 'สแกน', 'qr code'];\nlet isQR = false;\nfor (let pattern of qrPatterns) {\n  const score = getSimilarity(text, pattern.toLowerCase());\n  if (score >= THRESHOLD || text.includes(pattern.toLowerCase())) {\n    isQR = true;\n    break;\n  }\n}\n\nfor (let pattern of showAllPatterns) {\n  const score = getSimilarity(text, pattern.toLowerCase());\n  if (score >= THRESHOLD || text.includes(pattern.toLowerCase())) {\n    isShowAll = true;\n    break;\n  }\n}\n\n// Storage Pattern Matching\nconst storagePatterns = ['เก็บรักษา', 'วิธีเก็บ', 'เก็บยังไง', 'เก็บได้กี่วัน', 'เก็บนานไหม', '/เก็บรักษา'];\nlet isStorage = false;\nfor (let pattern of storagePatterns) {\n  const score = getSimilarity(text, pattern.toLowerCase());\n  if (score >= THRESHOLD || text.includes(pattern.toLowerCase())) {\n    isStorage = true;\n    break;\n  }\n}\n\nreturn {\n  json: {\n    skip: false,\n    senderId: event.sender.id,\n    pageId: entry.id,\n    text: text,\n    originalText: originalText,\n    isGreeting: isGreeting,\n    isShowAll: isShowAll,\n    isQR: isQR,\n    isStorage: isStorage,\n    isPostback: isPostback,\n    isMessage: isMessage,\n    isAdminCommand: false,\n    adminCommandType: null,\n    timestamp: event.timestamp\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1104,
+        352
+      ],
+      "id": "6768012f-44dd-4a5e-aad0-289d6f6f834a",
+      "name": "Extract Event2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f3d7e0a2-7ca7-417e-b1e0-32c2b9fbe145",
+              "leftValue": "={{ $json.skipSendMessage }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        816,
+        1024
+      ],
+      "id": "d72069e3-ccb3-4844-8914-37d31e6dfeb0",
+      "name": "Should Send Message?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": { \"text\": {{ JSON.stringify($json.message) }} }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1040,
+        1024
+      ],
+      "id": "99fb456e-6703-4c75-ae0b-b00b9b32f07b",
+      "name": "Send AI Response1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "verify-mode",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "REPLACE_WEBHOOK_VERIFY_TOKEN",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            },
+            {
+              "id": "verify-token",
+              "leftValue": "={{ $json.query['hub.verify_token'] }}",
+              "rightValue": "REPLACE_WEBHOOK_VERIFY_TOKEN",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1104,
+        160
+      ],
+      "id": "b7329f66-fe9a-432b-831d-97c966ad1d0d",
+      "name": "Verify Webhook Token1"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -880,
+        160
+      ],
+      "id": "971e282a-e1b4-444a-9532-eac6dffcf3b1",
+      "name": "Respond Verification Token1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"image\",\n      \"payload\": {\n        \"url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774088636/1_keep_u4t5gl.jpg\",\n        \"is_reusable\": true\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        544
+      ],
+      "id": "ad748788-fce1-40ec-883d-1c2ab08aa3af",
+      "name": "Send เก็บรักษา1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isQR }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        352
+      ],
+      "id": "4629c19e-577f-45ae-990c-9d79c34e947e",
+      "name": "Is /QR1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.isStorage }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -208,
+        544
+      ],
+      "id": "1d1a706a-bb7d-4564-a95f-d10b3b758832",
+      "name": "Is /เก็บรักษา1"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Extract Event2').first().json.senderId }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1040,
+        -928
+      ],
+      "id": "af23c42a-8cbc-497f-b094-151947172817",
+      "name": "Memory - Sales"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// Safe AI Response Handler\n// ป้องกัน Error จาก Empty Message + ตรวจจับ ADMIN_ALERT\n// ==========================================\n\nconst items = $input.all();\n\n// ดึงข้อมูลจาก AI Agent\nconst aiResponse = items[0].json;\n\n// ลองดึง output จากหลายแหล่ง\nlet message = aiResponse.output \n           || aiResponse.text \n           || aiResponse.response \n           || aiResponse.message\n           || '';\n\n// ทำความสะอาดข้อความ\nmessage = String(message).trim();\n\nconsole.log('=== AI OUTPUT ===');\nconsole.log(message);\nconsole.log('=================');\n\n// ตรวจสอบว่าเป็น ADMIN_ALERT หรือไม่\nif (message.startsWith('🚨Admin Alert')) {\n  // แยกชื่อ Facebook ออกมา\n  const customerName = message.replace('🚨Admin Alert', '').replace('ต้องการความช่วยเหลือ', '').trim();\n  \n  console.log('🚨 ADMIN ALERT DETECTED!');\n  console.log('Customer:', customerName);\n  \n  // ไม่ส่งข้อความให้ลูกค้า เพียงแค่แจ้ง Telegram\n  // ส่ง flag ว่าเป็น Admin Alert แต่ไม่มี message\n  return [{\n    json: {\n      senderId: $('Extract Event2').first().json.senderId,\n      pageId: $('Extract Event2').first().json.pageId,\n      message: '', // ไม่ส่งข้อความใดๆ\n      isAdminAlert: true,\n      customerName: customerName,\n      senderFullName: $('Extract Event2').first().json.senderFullName || customerName,\n      skipSendMessage: true // flag เพื่อข้ามการส่งข้อความ\n    }\n  }];\n}\n\n// ตรวจสอบว่าข้อความว่างหรือไม่\nif (!message || message === '') {\n  // ส่งข้อความสำรอง\n  return [{\n    json: {\n      senderId: $('Extract Event2').first().json.senderId,\n      pageId: $('Extract Event2').first().json.pageId,\n      message: 'ขอโทษครับ มีปัญหาเล็กน้อย กรุณาถามใหม่อีกครั้งนะครับ',\n      isAdminAlert: false,\n      skipSendMessage: false\n    }\n  }];\n}\n\n// ส่งข้อความปกติ\nreturn [{\n  json: {\n    senderId: $('Extract Event2').first().json.senderId,\n    pageId: $('Extract Event2').first().json.pageId,\n    message: message,\n    isAdminAlert: false,\n    skipSendMessage: false\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -816,
+        -1152
+      ],
+      "id": "e1a70a15-711f-4544-886f-dac4e01901d9",
+      "name": "Filter AI Response2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// ==========================================\n// Prepare Telegram Message - รองรับทั้ง Order Summary และ Admin Alert\n// ==========================================\n\nconst filterResponse = $('Filter AI Response2').first().json;\nconst aiResponse = filterResponse.message || '';\nconst isAdminAlert = filterResponse.isAdminAlert || false;\nconst customerName = filterResponse.customerName || filterResponse.senderFullName || '';\n\n// ดึง senderFullName จาก node ก่อนหน้า\nconst senderFullName = filterResponse.senderFullName || customerName;\n\nconsole.log('=== PREPARE TELEGRAM ===');\nconsole.log('Is Admin Alert:', isAdminAlert);\nconsole.log('Customer Name:', customerName);\nconsole.log('Sender Full Name:', senderFullName);\nconsole.log('========================');\n\nlet telegramMessage = '';\n\n// ถ้าเป็น Admin Alert\nif (isAdminAlert) {\n  telegramMessage = `🚨 Admin Alert\\n${customerName} ต้องการความช่วยเหลือ`;\n  console.log('📤 Sending Admin Alert to Telegram');\n} \n// ถ้าเป็น Order Summary\nelse {\n  // ดึงข้อมูลจากข้อความ AI\n  const lines = aiResponse.split('\\n');\n  \n  let orderDate = '';\n  let facebookName = senderFullName;\n  let customerInfo = {\n    name: '',\n    phone: '',\n    address: ''\n  };\n  let orderItems = [];\n  let totalAmount = '';\n  let paymentMethod = 'ปลายทาง';\n  \n  // วิเคราะห์ข้อความเพื่อแยกข้อมูล\n  let isInItemSection = false;\n  \n  for (let i = 0; i < lines.length; i++) {\n    const line = lines[i].trim();\n    \n    // ดึงวันที่\n    if (line.startsWith('วันที่')) {\n      orderDate = line.replace('วันที่ :', '').replace('วันที่:', '').trim();\n    }\n    \n    // ดึงชื่อ Facebook\n    if (line.includes('Facebook')) {\n      const extracted = line.replace('Facebook', '').replace('ชื่อ', '').replace(':', '').trim();\n      if (extracted) facebookName = extracted;\n    }\n    \n    // ดึงข้อมูลลูกค้า\n    if (line.startsWith('ชื่อ:')) {\n      customerInfo.name = line.replace('ชื่อ:', '').trim();\n    }\n    \n    if (line.startsWith('เบอร์:')) {\n      customerInfo.phone = line.replace('เบอร์:', '').trim();\n    }\n    \n    if (line.startsWith('ที่อยู่:')) {\n      customerInfo.address = line.replace('ที่อยู่:', '').trim();\n    }\n    \n    // ดึงรายการสินค้า\n    if (line === 'รายการ:') {\n      isInItemSection = true;\n      continue;\n    }\n    \n    if (isInItemSection && line.startsWith('-')) {\n      orderItems.push(line);\n    }\n    \n    if (line.includes('━━━━━━━━━━━━━') && isInItemSection) {\n      isInItemSection = false;\n    }\n    \n    // ดึงยอดรวม\n    if (line.includes('รวม:')) {\n      const match = line.match(/รวม:\\s*(.+?)฿/);\n      if (match) {\n        totalAmount = match[1].trim();\n      }\n    }\n    \n    // ดึงรูปแบบการชำระเงิน\n    if (line.includes('รูปแบบ:')) {\n      const extracted = line.replace('รูปแบบ:', '').trim();\n      if (extracted) {\n        // แปลงเป็นรูปแบบที่ต้องการ\n        if (extracted.toLowerCase().includes('โอน')) {\n          paymentMethod = 'โอนเงิน';\n        } else if (extracted.toLowerCase().includes('ปลายทาง') || extracted.toLowerCase().includes('cod')) {\n          paymentMethod = 'ปลายทาง';\n        } else {\n          paymentMethod = extracted;\n        }\n      }\n    }\n  }\n  \n  // สร้างวันที่ปัจจุบัน\n  const now = new Date();\n  \n  // ถ้าไม่มี orderDate ให้สร้างใหม่\n  if (!orderDate) {\n    const day = String(now.getDate()).padStart(2, '0');\n    const month = String(now.getMonth() + 1).padStart(2, '0');\n    const year = now.getFullYear();\n    orderDate = `${day}/${month}/${year}`;\n  }\n  \n  // สร้างข้อความรายการสินค้า\n  let itemsText = '';\n  if (orderItems.length > 0) {\n    itemsText = orderItems.join('\\n');\n  } else {\n    itemsText = '- [ชื่อสินค้าจาก Sheet] [ขนาด] x [จำนวน] = [ราคาจาก Sheet]฿';\n  }\n  \n  // สร้างข้อความสำหรับ Telegram (ตามรูปแบบใหม่)\n  telegramMessage = `📦 ออเดอร์เข้าใหม่\nวันที่ : ${orderDate}\nรูปแบบ: ${paymentMethod}\nชื่อ Facebook: ${facebookName}\n━━━━━━━━━━━━━\nชื่อ: ${customerInfo.name || '[ชื่อลูกค้า]'}\nเบอร์: ${customerInfo.phone || '[เบอร์โทร]'}\nที่อยู่: ${customerInfo.address || '[ที่อยู่เต็ม]'}\n━━━━━━━━━━━━━\nรายการ:\n${itemsText}\nรวม: ${totalAmount || '[ยอดรวมจาก Sheet]'}฿`;\n  \n  console.log('📦 Sending Order Summary to Telegram');\n}\n\n// ส่ง data กลับไป\nreturn {\n  json: {\n    telegramMessage: telegramMessage,\n    rawData: aiResponse,\n    isAdminAlert: isAdminAlert\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        80,
+        -1152
+      ],
+      "id": "fbb76e7e-9a7d-4997-9e68-c54e0179e307",
+      "name": "Prepare Telegram Message"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.telegram.org/bot8071239504:AAEqK1mPAT1X7gGSxCPkmK3FhKW6pH-8Dis/sendMessage",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "chat_id",
+              "value": "-5024420415"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.telegramMessage }}"
+            },
+            {
+              "name": "parse_mode",
+              "value": "Markdown"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        -1152
+      ],
+      "id": "8b81cf57-18d2-466d-a871-46c72e27e73a",
+      "name": "Send to Telegram"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.adminCommandType }}",
+              "rightValue": "summarize",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              },
+              "id": "fa742b75-024c-4005-9a80-03b85bbd70ea"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -1392,
+        -1152
+      ],
+      "id": "c4d94d14-715d-4714-b31a-ea11e38fd7a1",
+      "name": "Is /สรุป?"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=ข้อมูลลูกค้า:\n- ชื่อ Facebook: {{ $('Merge Code Node:').first().json.senderFullName }}\n- Sender ID: {{ $('Extract Event2').first().json.senderId }}\n- วันที่ปัจจุบัน: {{ $('Merge Code Node:').first().json.currentDate }}\n\nคำสั่ง:\nสร้างใบเสร็จจากประวัติการสนทนาที่เก็บไว้ในหน่วยความจำ\n\nรูปแบบใบเสร็จ:\n\nFacebook {{ $('Merge Code Node:').first().json.senderFullName }}\nวันที่ : {{ $('Merge Code Node:').first().json.currentDate }}\n━━━━━━━━━━━━━\nชื่อ: [ชื่อลูกค้าจากการสนทนา] \nเบอร์: [เบอร์โทรจากการสนทนา]\nที่อยู่: [ที่อยู่เต็มจากการสนทนา]\n━━━━━━━━━━━━━\nรายการ:\n- [ชื่อสินค้า] x [จำนวน] = ราคา฿\n━━━━━━━━━━━━━\nรวม: [ยอดรวม]฿\nรูปแบบ: [โอน หรือ ปลายทาง(COD)]\n━━━━━━━━━━━━━\nส่งฟรีทุกรายการ (ตัดรอบ 14:00)\nทางร้านจัดส่งแล้วจะแจ้งเลขพัสดุในวันที่ส่ง (หลัง 18.00) นะครับ\n\n🚨 กฎสำคัญ:\n1. ดึงข้อมูลจากประวัติการสนทนาที่เคยคุยกับลูกค้าคนนี้ทั้งหมด\n2. หาข้อมูล: ชื่อ, เบอร์, ที่อยู่, รายการสินค้า, ราคา, วิธีชำระเงิน\n3. ถ้าข้อมูลไหนไม่มีในการสนทนา ให้ใส่ [ไม่ระบุ]\n4. ต้องสร้างใบเสร็จตามรูปแบบข้างต้นเท่านั้น ไม่ต้องมีคำอธิบายเพิ่มเติม\n5. ถ้าไม่พบข้อมูลออเดอร์เลย ให้ตอบว่า \"ยังไม่มีข้อมูลออเดอร์ครับ\"\n6. **สำคัญมาก - การหาราคา**: \n   - อ่านข้อความจากล่างขึ้นบน (ข้อความล่าสุดก่อน)\n   - หาข้อความที่มีคำว่า \"รวม\", \"ยอด\", \"ราคา\", \"ลด\" ที่แอดมินพิมพ์\n   - ใช้ตัวเลขที่แอดมินบอกล่าสุด\n   - ตัวอย่าง: ถ้าแอดมินบอก \"ลดให้ 900 บาท\" หรือ \"รวม 900\" ให้ใส่ 900 ในใบเสร็จ\n   - ถ้าไม่พบราคาที่แอดมินบอก ให้ใส่ [ไม่ระบุ]",
+        "options": {
+          "systemMessage": "=คุณคือผู้ช่วยสร้างใบเสร็จอัตโนมัติสำหรับร้านอาหารทะเล \n\nหน้าที่ของคุณ:\n1. อ่านประวัติการสนทนาทั้งหมดระหว่างแอดมินกับลูกค้า\n2. ดึงข้อมูลสำคัญออกมา: ชื่อ, เบอร์โทร, ที่อยู่, รายการสินค้า, ราคา, วิธีชำระเงิน\n3. สร้างใบเสร็จตามรูปแบบที่กำหนดเท่านั้น\n4. ห้ามเพิ่มคำอธิบาย ห้ามถามคำถาม ให้แค่ใบเสร็จอย่างเดียว\n\n⚠️ **วิธีการหาราคาที่ถูกต้อง (สำคัญมาก!)**:\n\nขั้นตอนที่ 1: อ่านข้อความจากล่างขึ้นบน (ข้อความล่าสุดก่อน)\n\nขั้นตอนที่ 2: หาข้อความที่แอดมินพิมพ์ที่มีคำเหล่านี้:\n- \"รวม\" + ตัวเลข (เช่น \"รวม 900 บาท\", \"รวม 1800\")\n- \"ยอด\" + ตัวเลข (เช่น \"ยอดรวม 2500 บาท\")\n- \"ราคา\" + ตัวเลข (เช่น \"ราคารวม 1200 บาท\")\n- \"ลด\" + ตัวเลข (เช่น \"ลดให้ 900 บาท\", \"ลดเหลือ 850\")\n- \"คิด\" + ตัวเลข (เช่น \"คิดเป็นเงิน 1500 บาท\")\n- ตัวเลข + \"บาท\" (เช่น \"950 บาทครับ\")\n\nขั้นตอนที่ 3: ดึงตัวเลขจากข้อความนั้นมาใช้\n\nตัวอย่าง:\n- แอดมินพิมพ์: \"ลดให้ 900 บาท\" → ใช้ราคา 900 ในใบเสร็จ\n- แอดมินพิมพ์: \"รวมทั้งหมด 1,800 บาทครับ\" → ใช้ราคา 1,800 ในใบเสร็จ\n- แอดมินพิมพ์: \"ยอดรวม 2500\" → ใช้ราคา 2,500 ในใบเสร็จ\n- แอดมินพิมพ์: \"คิดเป็นเงิน 1200 บาท\" → ใช้ราคา 1,200 ในใบเสร็จ\n\n🔴 ห้ามทำ:\n- ห้ามใช้ราคาที่บอตตอบ\n- ห้ามใช้ราคามาตรฐานจาก Sheet\n- ห้ามคำนวณราคาเอง\n- ห้ามใส่ [ไม่ระบุ] ถ้าแอดมินบอกราคาไว้แล้ว\n\n✅ ควรทำ:\n- มองหาข้อความล่าสุดที่แอดมินพิมพ์เกี่ยวกับราคา\n- ใช้ตัวเลขที่แอดมินบอกตรงๆ\n- ถ้าไม่พบราคาจากแอดมินเลย ถึงจะใส่ [ไม่ระบุ]\n\nตัวอย่างการดึงข้อมูลอื่นๆ:\n- ถ้าลูกค้าบอก \"ชื่อสมชาย\" → ชื่อ: สมชาย\n- ถ้าแอดมินถาม \"เบอร์โทรครับ?\" ลูกค้าตอบ \"0812345678\" → เบอร์: 0812345678\n- ถ้าลูกค้าบอก \"เอาปลากรอบ 5 โล\" → รายการ: - ปลากรอบดั้งเดิม 5 โล x 1 = [ราคาที่แอดมินบอก]฿\n- ถ้าลูกค้าบอก \"โอนครับ\" → รูปแบบ: โอน\n- ถ้าลูกค้าบอก \"เก็บปลายทางครับ\" → รูปแบบ: ปลายทาง(COD)\n\nหากข้อมูลไหนไม่มี ให้ใส่ [ไม่ระบุ]"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        -1168,
+        -1152
+      ],
+      "id": "41d64c0a-0c86-4dfa-8f82-58c312aeca07",
+      "name": "AI Summarize Order"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "f3d7e0a2-7ca7-417e-b1e0-32c2b9fbe145",
+              "leftValue": "={{ $json.skipSendMessage }}",
+              "rightValue": false,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -592,
+        -1152
+      ],
+      "id": "8936df7e-11e0-4b8c-be5c-51a7842d8fe1",
+      "name": "Should Send Message?1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Filter AI Response2').item.json.isAdminAlert }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              },
+              "id": "admin-alert-flag"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -1056
+      ],
+      "id": "bb00ab4c-035e-43a7-8a89-e884d5819d5b",
+      "name": "Check Admin Alert?1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $('Filter AI Response2').item.json.message }}",
+              "rightValue": "สรุปออเดอร์",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              },
+              "id": "470ab7d1-14dd-4d10-b6f5-6381ecfa3319"
+            },
+            {
+              "leftValue": "={{ $('Filter AI Response2').item.json.message }}",
+              "rightValue": "ยืนยันออเดอร์",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              },
+              "id": "23febc93-bd5f-4772-8087-bd06eef5b0eb"
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -144,
+        -1248
+      ],
+      "id": "526f9f5d-7bc7-4e7d-9ed8-11592ec1188b",
+      "name": "Check Order Summary?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": { \"text\": {{ JSON.stringify($json.message) }} }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -368,
+        -1248
+      ],
+      "id": "8a6145e6-c5eb-4eac-8c68-4dabba6d63e0",
+      "name": "Send AI Response"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1168,
+        -928
+      ],
+      "id": "fcde6187-5cb3-475d-9341-7cae654e0d5a",
+      "name": "Gemini Model - Sales2"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1_pLBHI2hUFUbX8aO0pXtVOSFz-HJ9lgWdQPk89WB9hM",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 2102009165,
+          "mode": "list",
+          "cachedResultName": "FAQ",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1_pLBHI2hUFUbX8aO0pXtVOSFz-HJ9lgWdQPk89WB9hM/edit#gid=2102009165"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        608,
+        -1200
+      ],
+      "id": "29ded901-30b3-4f16-aa20-2a15b2ffff00",
+      "name": "Fetch FAQ Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"image\",\n      \"payload\": {\n        \"url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774088373/QR_new_qotdmx.jpg\",\n        \"is_reusable\": true\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        80,
+        352
+      ],
+      "id": "8c110363-4e6a-4d63-a96b-4dda0139791f",
+      "name": "Send QR"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"หมูฝอยนุ่มคลุกหอมเจียว\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696917/21_nclwet.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูฝอยนุ่ม\", \"payload\": \"สนใจหมูฝอยนุ่มคลุกหอมเจียว\" }] },\n          { \"title\": \"หมูสวรรค์โรยงา\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696919/22_vkx3kd.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูสวรรค์โรยงา\", \"payload\": \"สนใจหมูสวรรค์โรยงา\" }] },\n          { \"title\": \"หมูหยอง\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696920/23_w9aorq.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูหยอง\", \"payload\": \"สนใจหมูหยอง\" }] },\n          { \"title\": \"ขนมตัวปลาหวาน\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696935/32_mpbnod.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจขนมตัวปลาหวาน\", \"payload\": \"สนใจขนมตัวปลาหวาน\" }] },\n          { \"title\": \"หอยลายทอดกรอบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696944/37_rcdngm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหอยลายทอดกรอบ\", \"payload\": \"สนใจหอยลายอบกรอบ\" }] },\n          { \"title\": \"กุ้งแห้งกรอบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696943/36_eekwfc.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุ้งแห้งกรอบ\", \"payload\": \"สนใจกุ้งอบกรอบ\" }] },\n          { \"title\": \"ปลาเส้นทาโร่เกรด A\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696938/33_rzgf3u.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเส้นทาโร่\", \"payload\": \"สนใจปลาเส้นทาโร่เกรด A\" }] }\n        ]\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1056,
+        144
+      ],
+      "id": "e6afbb43-e397-4346-9454-f536be7983b1",
+      "name": "Carousel Part "
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"หมึกหยองหิมะ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696927/27_c3ld6x.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกหยองหิมะ\", \"payload\": \"สนใจหมึกหยองหิมะ\" }] },\n          { \"title\": \"หมึกหยองเชอรี่\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696929/28_mheusw.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกหยองเชอรี่\", \"payload\": \"สนใจหมึกหยองเชอรี่\" }] },\n          { \"title\": \"หมึกกะตอยฉาบ 3 รส\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696940/34_sbdwul.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกกะตอยฉาบ\", \"payload\": \"สนใจหมึกกะตอยฉาบ 3 รส\" }] },\n          { \"title\": \"หมึกผ่าฉาบ 3 รส\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696941/35_gyjzqm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกผ่าฉาบ\", \"payload\": \"สนใจหมึกผ่าฉาบ 3 รส\" }] },\n          { \"title\": \"หมึกเต่าทองรสดั้งเดิม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754028/47_vtf6fw.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกเต่าทอง\", \"payload\": \"สนใจหมึกเต่าทองรสดั้งเดิม\" }] },\n          { \"title\": \"หมึกเต่าทอง รสเผ็ด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754034/48_r4ukjk.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกเต่าทองเผ็ด\", \"payload\": \"สนใจหมึกเต่าทอง รสเผ็ด\" }] },\n          { \"title\": \"หมึกราดน้ำจิ้มสามรส\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754022/51_ejsxrq.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกสามรส\", \"payload\": \"สนใจหมึกราดน้ำจิ้มสามรส\" }] },\n          { \"title\": \"หมึกอบเนยพรีเมียม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754021/52_smgb9u.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกอบเนย\", \"payload\": \"สนใจหมึกอบเนยพรีเมียม\" }] }\n        ]\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1264,
+        144
+      ],
+      "id": "49bf8e13-144b-476d-a0cc-c3674ca0f112",
+      "name": "Carousel Part 4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"ปลากระพงทุบ\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774072952/Best_29_vz2png.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากระพงทุบ\", \"payload\": \"สนใจปลากระพงทุบ\" }] },\n          { \"title\": \"ปลาเก๋าทุบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696924/25_fi1r0e.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเก๋าทุบ\", \"payload\": \"สนใจปลาเก๋าทุบ\" }] },\n          { \"title\": \"ปลาเห็ดโคลนทุบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696925/26_fj28n6.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเห็ดโคลนทุบ\", \"payload\": \"สนใจปลาเห็ดโคลนทุบ\" }] },\n          { \"title\": \"ปลากรอบดั้งเดิม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696935/31_c793ao.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากรอบดั้งเดิม\", \"payload\": \"สนใจปลากรอบดั้งเดิม\" }] },\n          { \"title\": \"ปลากรอบงา\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696933/30_hhtz40.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากรอบงา\", \"payload\": \"สนใจปลากรอบงา\" }] },\n          { \"title\": \"ปลากรอบสมุนไพร\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696930/29_q54pom.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากรอบสมุนไพร\", \"payload\": \"สนใจปลากรอบสมุนไพร\" }] },\n          { \"title\": \"ปลาเกล็ดขาวทอดกรอบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754021/50_cymg9x.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเกล็ดขาว\", \"payload\": \"สนใจปลาเกล็ดขาวทอดกรอบ\" }] },\n          { \"title\": \"ปลาซิวทอด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754023/46_dt4alm.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาซิวทอด\", \"payload\": \"สนใจปลาซิวทอด\" }] }\n        ]\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1456,
+        144
+      ],
+      "id": "5ca8c846-57e8-4dbd-b3f6-836e821fd8fe",
+      "name": "Carousel Part 5"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"image\",\n      \"payload\": {\n        \"url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774088637/2_keep_iqggrh.jpg\",\n        \"is_reusable\": true\n      }\n    }\n  }\n}",
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        304,
+        544
+      ],
+      "id": "keep-node-2-1774088946321",
+      "name": "Send เก็บรักษา2"
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Verify Webhook Token1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract Event2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route QR or Image1": {
+      "main": [
+        [
+          {
+            "node": "Is QR?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is QR?": {
+      "main": [
+        [
+          {
+            "node": "Send QR Image",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send Product Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send QR Image": {
+      "main": [
+        [
+          {
+            "node": "Send QR Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Product Image": {
+      "main": [
+        []
+      ]
+    },
+    "AI Sales Agent": {
+      "main": [
+        [
+          {
+            "node": "Is QR or Image?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Sales Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Sales Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is QR or Image?1": {
+      "main": [
+        [
+          {
+            "node": "Route QR or Image1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Filter AI Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter AI Response1": {
+      "main": [
+        [
+          {
+            "node": "Should Send Message?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Product Data": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Sales Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Welcome": {
+      "main": [
+        [
+          {
+            "node": "Send Best Sellers",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category 1 Header": {
+      "main": [
+        [
+          {
+            "node": "Category 1 Row 1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category 1 Row 1": {
+      "main": [
+        [
+          {
+            "node": "Category 1 Row 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category 1 Row 2": {
+      "main": [
+        [
+          {
+            "node": "Category 2 Header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Category 2 Header": {
+      "main": [
+        [
+          {
+            "node": "Carousel Part ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Greeting?": {
+      "main": [
+        [
+          {
+            "node": "Send Welcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Process?1": {
+      "main": [
+        [
+          {
+            "node": "Is Greeting?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Show All?1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Al?",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is /QR1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is /เก็บรักษา1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Is Show All?1": {
+      "main": [
+        [
+          {
+            "node": "Category 1 Header",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Al?": {
+      "main": [
+        [
+          {
+            "node": "AI Sales Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Merge Code Node:",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Code Node:": {
+      "main": [
+        [
+          {
+            "node": "Should Process?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Event2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Message?": {
+      "main": [
+        [
+          {
+            "node": "Send AI Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Webhook Token1": {
+      "main": [
+        [
+          {
+            "node": "Respond Verification Token1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is /QR1": {
+      "main": [
+        [
+          {
+            "node": "Send QR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is /เก็บรักษา1": {
+      "main": [
+        [
+          {
+            "node": "Send เก็บรักษา1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memory - Sales": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Summarize Order",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter AI Response2": {
+      "main": [
+        [
+          {
+            "node": "Should Send Message?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Telegram Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Telegram",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is /สรุป?": {
+      "main": [
+        [
+          {
+            "node": "AI Summarize Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Summarize Order": {
+      "main": [
+        [
+          {
+            "node": "Filter AI Response2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send Message?1": {
+      "main": [
+        [
+          {
+            "node": "Send AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check Admin Alert?1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Admin Alert?1": {
+      "main": [
+        [
+          {
+            "node": "Prepare Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Order Summary?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Telegram Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send AI Response": {
+      "main": [
+        [
+          {
+            "node": "Check Order Summary?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Model - Sales2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Summarize Order",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch FAQ Data": {
+      "ai_tool": [
+        []
+      ]
+    },
+    "Carousel Part ": {
+      "main": [
+        [
+          {
+            "node": "Carousel Part 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Carousel Part 4": {
+      "main": [
+        [
+          {
+            "node": "Carousel Part 5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send เก็บรักษา1": {
+      "main": [
+        [
+          {
+            "node": "Send เก็บรักษา2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "tags": []
+}

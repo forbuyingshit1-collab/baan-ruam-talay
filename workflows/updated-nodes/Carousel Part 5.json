@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"ปลากระพงทุบ\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774072952/Best_29_vz2png.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากระพงทุบ\", \"payload\": \"สนใจปลากระพงทุบ\" }] },\n          { \"title\": \"ปลาเก๋าทุบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696924/25_fi1r0e.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเก๋าทุบ\", \"payload\": \"สนใจปลาเก๋าทุบ\" }] },\n          { \"title\": \"ปลาเห็ดโคลนทุบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696925/26_fj28n6.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเห็ดโคลนทุบ\", \"payload\": \"สนใจปลาเห็ดโคลนทุบ\" }] },\n          { \"title\": \"ปลากรอบดั้งเดิม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696935/31_c793ao.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากรอบดั้งเดิม\", \"payload\": \"สนใจปลากรอบดั้งเดิม\" }] },\n          { \"title\": \"ปลากรอบงา\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696933/30_hhtz40.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากรอบงา\", \"payload\": \"สนใจปลากรอบงา\" }] },\n          { \"title\": \"ปลากรอบสมุนไพร\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696930/29_q54pom.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากรอบสมุนไพร\", \"payload\": \"สนใจปลากรอบสมุนไพร\" }] },\n          { \"title\": \"ปลาเกล็ดขาวทอดกรอบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754021/50_cymg9x.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเกล็ดขาว\", \"payload\": \"สนใจปลาเกล็ดขาวทอดกรอบ\" }] },\n          { \"title\": \"ปลาซิวทอด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754023/46_dt4alm.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาซิวทอด\", \"payload\": \"สนใจปลาซิวทอด\" }] }\n        ]\n      }\n    }\n  }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    1456,
+    144
+  ],
+  "id": "5ca8c846-57e8-4dbd-b3f6-836e821fd8fe",
+  "name": "Carousel Part 5"
+}

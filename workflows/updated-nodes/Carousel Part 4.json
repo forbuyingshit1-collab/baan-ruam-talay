@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"หมึกหยองหิมะ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696927/27_c3ld6x.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกหยองหิมะ\", \"payload\": \"สนใจหมึกหยองหิมะ\" }] },\n          { \"title\": \"หมึกหยองเชอรี่\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696929/28_mheusw.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกหยองเชอรี่\", \"payload\": \"สนใจหมึกหยองเชอรี่\" }] },\n          { \"title\": \"หมึกกะตอยฉาบ 3 รส\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696940/34_sbdwul.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกกะตอยฉาบ\", \"payload\": \"สนใจหมึกกะตอยฉาบ 3 รส\" }] },\n          { \"title\": \"หมึกผ่าฉาบ 3 รส\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696941/35_gyjzqm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกผ่าฉาบ\", \"payload\": \"สนใจหมึกผ่าฉาบ 3 รส\" }] },\n          { \"title\": \"หมึกเต่าทองรสดั้งเดิม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754028/47_vtf6fw.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกเต่าทอง\", \"payload\": \"สนใจหมึกเต่าทองรสดั้งเดิม\" }] },\n          { \"title\": \"หมึกเต่าทอง รสเผ็ด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754034/48_r4ukjk.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกเต่าทองเผ็ด\", \"payload\": \"สนใจหมึกเต่าทอง รสเผ็ด\" }] },\n          { \"title\": \"หมึกราดน้ำจิ้มสามรส\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754022/51_ejsxrq.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกสามรส\", \"payload\": \"สนใจหมึกราดน้ำจิ้มสามรส\" }] },\n          { \"title\": \"หมึกอบเนยพรีเมียม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754021/52_smgb9u.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกอบเนย\", \"payload\": \"สนใจหมึกอบเนยพรีเมียม\" }] }\n        ]\n      }\n    }\n  }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    1264,
+    144
+  ],
+  "id": "49bf8e13-144b-476d-a0cc-c3674ca0f112",
+  "name": "Carousel Part 4"
+}

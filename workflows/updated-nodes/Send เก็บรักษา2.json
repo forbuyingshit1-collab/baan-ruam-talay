@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"image\",\n      \"payload\": {\n        \"url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774088637/2_keep_iqggrh.jpg\",\n        \"is_reusable\": true\n      }\n    }\n  }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    304,
+    544
+  ],
+  "id": "keep-node-2-1774088946321",
+  "name": "Send เก็บรักษา2"
+}

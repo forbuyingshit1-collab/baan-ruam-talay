@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"ปลาช่อนทะเลจืด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696901/11_prwvcm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาช่อนทะเลจืด\", \"payload\": \"สนใจปลาช่อนทะเลจืด\" }] },\n          { \"title\": \"ปลาข้างเหลืองโรยงา/ไม่งา\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696909/16_rihfbj.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาข้างเหลือง\", \"payload\": \"สนใจปลาข้างเหลืองโรยงา/ไม่งา\" }] },\n          { \"title\": \"ปลาแก้วผ่า\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074517/Menu_for_AI_18_agrzu6.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาแก้วผ่า\", \"payload\": \"สนใจปลาแก้วผ่า\" }] },\n          { \"title\": \"ปลาปะกัง\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696903/12_sxzu9l.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาปะกัง\", \"payload\": \"สนใจปลาปะกัง\" }] },\n          { \"title\": \"ปลาข้าวสาร\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696906/14_pps7sf.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาข้าวสาร\", \"payload\": \"สนใจปลาข้าวสาร\" }] },\n          { \"title\": \"ปลาวงแก้วจืด\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696910/17_qf84om.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาวงแก้วจืด\", \"payload\": \"สนใจปลาวงแก้วจืด\" }] },\n          { \"title\": \"ปลากระเบนหวาน\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696912/18_mwszfm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลากระเบนหวาน\", \"payload\": \"สนใจปลากระเบนหวาน\" }] },\n          { \"title\": \"กุ้งวัง ใหญ่/เล็ก (จืด)\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696907/15_xl4xqq.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุ้งวัง\", \"payload\": \"สนใจกุ้งวัง ใหญ่/เล็ก  (จืด)\" }] },\n          { \"title\": \"กุ้งแห้งเปลือก\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074138/Menu_for_AI_65_yrzmz4.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุ้งแห้งเปลือก\", \"payload\": \"สนใจกุ้งแห้งเปลือก\" }] },\n          { \"title\": \"กุนเชียง (หมู,ไก่,ปลา)\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1771754021/53_ifiyk3.png\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุนเชียง\", \"payload\": \"สนใจกุนเชียง (หมู,ไก่,ปลา)\" }] }\n        ]\n      }\n    }\n  }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    592,
+    160
+  ],
+  "id": "1d534530-1ce3-418d-947c-f6f5de919cd0",
+  "name": "Category 1 Row 2"
+}

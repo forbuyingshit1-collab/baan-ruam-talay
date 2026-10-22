@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"หมึก A4, A5, A6\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696891/1_pt4dsc.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึก A4, A5, A6\", \"payload\": \"สนใจหมึก A4, A5, A6\" }] },\n          { \"title\": \"หมึกผ่าเรือไซส์ 2-4 นิ้ว\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696891/2_lpevos.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกผ่าเรือ\", \"payload\": \"สนใจหมึกผ่าเรือไซส์ 2 นิ้ว ,3 นิ้ว, 4 นิ้ว\" }] },\n          { \"title\": \"หมึกผ่าเรือไซส์ 5 นิ้ว\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074137/Menu_for_AI_66_kxtktr.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกผ่าเรือ 5 นิ้ว\", \"payload\": \"สนใจหมึกผ่าเรือไซส์ 5 นิ้ว\" }] },\n          { \"title\": \"หมึกเจาะตาคัดพิเศษ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696892/3_x2qy1q.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกเจาะตาคัดพิเศษ\", \"payload\": \"สนใจหมึกเจาะตาคัดพิเศษ\" }] },\n          { \"title\": \"หมึกแพ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696893/4_xkcahr.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกแพ\", \"payload\": \"สนใจหมึกแพ\" }] },\n          { \"title\": \"หมึกกะตอยต้ม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696895/6_xu1kbq.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกกะตอยต้ม\", \"payload\": \"สนใจหมึกกะตอยต้ม\" }] },\n          { \"title\": \"หมึกกะตอยแห้ง\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074517/Menu_for_AI_10_ldjz3x.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมึกกะตอยแห้ง\", \"payload\": \"สนใจหมึกกะตอยแห้ง\" }] },\n          { \"title\": \"หนวดหมึกแห้ง\", \"image_url\": \"https://res.cloudinary.com/duei21aup/image/upload/v1774074137/Menu_for_AI_11_derzpi.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหนวดหมึกแห้ง\", \"payload\": \"สนใจหนวดหมึกแห้ง\" }] },\n          { \"title\": \"ปลาทูมันเค็มน้อย\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696914/19_fypo0b.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาทูมันเค็มน้อย\", \"payload\": \"สนใจปลาทูมันเค็มน้อย\" }] },\n          { \"title\": \"ปลาทูหอมเค็ม\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696915/20_k5q7ps.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาทูหอมเค็ม\", \"payload\": \"สนใจปลาทูหอมเค็ม\" }] }\n        ]\n      }\n    }\n  }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    368,
+    160
+  ],
+  "id": "17f29fbc-c508-4bf7-939a-44e59fdd3c67",
+  "name": "Category 1 Row 1"
+}

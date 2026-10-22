@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $('Extract Event2').first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": { \"text\": \"⠀\\n🍖 อาหารแปรรูปพร้อมทาน\\n⠀\" }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    816,
+    160
+  ],
+  "id": "4281430d-3600-43c6-b103-005e95b8e9f2",
+  "name": "Category 2 Header"
+}

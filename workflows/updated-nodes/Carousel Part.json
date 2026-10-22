@@ -1,0 +1,22 @@
+{
+  "parameters": {
+    "method": "POST",
+    "url": "=https://graph.facebook.com/v23.0/{{ $('Extract Event2').first().json.pageId }}/messages",
+    "authentication": "genericCredentialType",
+    "genericAuthType": "httpQueryAuth",
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={\n  \"recipient\": { \"id\": \"{{ $(\"Extract Event2\").first().json.senderId }}\" },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"attachment\": {\n      \"type\": \"template\",\n      \"payload\": {\n        \"template_type\": \"generic\",\n        \"image_aspect_ratio\": \"square\",\n        \"elements\": [\n          { \"title\": \"หมูฝอยนุ่มคลุกหอมเจียว\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696917/21_nclwet.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูฝอยนุ่ม\", \"payload\": \"สนใจหมูฝอยนุ่มคลุกหอมเจียว\" }] },\n          { \"title\": \"หมูสวรรค์โรยงา\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696919/22_vkx3kd.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูสวรรค์โรยงา\", \"payload\": \"สนใจหมูสวรรค์โรยงา\" }] },\n          { \"title\": \"หมูหยอง\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696920/23_w9aorq.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหมูหยอง\", \"payload\": \"สนใจหมูหยอง\" }] },\n          { \"title\": \"ขนมตัวปลาหวาน\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696935/32_mpbnod.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจขนมตัวปลาหวาน\", \"payload\": \"สนใจขนมตัวปลาหวาน\" }] },\n          { \"title\": \"หอยลายทอดกรอบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696944/37_rcdngm.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจหอยลายทอดกรอบ\", \"payload\": \"สนใจหอยลายอบกรอบ\" }] },\n          { \"title\": \"กุ้งแห้งกรอบ\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696943/36_eekwfc.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจกุ้งแห้งกรอบ\", \"payload\": \"สนใจกุ้งอบกรอบ\" }] },\n          { \"title\": \"ปลาเส้นทาโร่เกรด A\", \"image_url\": \"https://res.cloudinary.com/ddlnovnum/image/upload/v1769696938/33_rzgf3u.jpg\", \"buttons\": [{ \"type\": \"postback\", \"title\": \"สนใจปลาเส้นทาโร่\", \"payload\": \"สนใจปลาเส้นทาโร่เกรด A\" }] }\n        ]\n      }\n    }\n  }\n}",
+    "options": {
+      "timeout": 30000
+    }
+  },
+  "type": "n8n-nodes-base.httpRequest",
+  "typeVersion": 4.2,
+  "position": [
+    1056,
+    144
+  ],
+  "id": "e6afbb43-e397-4346-9454-f536be7983b1",
+  "name": "Carousel Part "
+}
